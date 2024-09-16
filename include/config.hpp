@@ -19,6 +19,9 @@ struct Config {
     std::string host_build_target;
     std::unordered_map<std::string, BuildTarget> build_target_data;
     std::string host_install_prefix;
+
+    bool generate_compile_commands;
+    bool copy_compile_commands;
 };
 
 [[nodiscard]]

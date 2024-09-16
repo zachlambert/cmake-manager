@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 
 
 bool exec(const std::string& cmd) {
@@ -33,7 +34,9 @@ bool exec_build(const Config& config, const BuildArgs& args) {
 
     std::vector<std::string> options;
     options.push_back("-DCMAKE_BUILD_TYPE=" + cmake_build_type);
-    options.push_back("-DCMAKE_EXPORT_COMPILE_COMMANDS=1");
+    if (config.generate_compile_commands) {
+        options.push_back("-DCMAKE_EXPORT_COMPILE_COMMANDS=1");
+    }
     if (args.target == config.host_build_target) {
         options.push_back("-DCMAKE_INSTALL_PREFIX=" + config.host_install_prefix);
     } else {
@@ -47,9 +50,20 @@ bool exec_build(const Config& config, const BuildArgs& args) {
     }
     cmake_command += " ../../..";
     std::cout << cmake_command << std::endl;
-    return
-        exec(cmake_command)
+
+    bool success = exec(cmake_command)
         && exec("cmake --build " + build_dir);
+
+    if (!success) {
+        return false;
+    }
+    if (config.generate_compile_commands && config.copy_compile_commands) {
+        std::ifstream in(build_dir + "/compile_commands.json");
+        std::ofstream out("compile_commands.json");
+        out << in.rdbuf();
+    }
+
+    return true;
 }
 
 bool exec_install(const Config& config, const BuildArgs& args) {
@@ -58,5 +72,14 @@ bool exec_install(const Config& config, const BuildArgs& args) {
         + "/" + args.target
         + "/" + args.type;
     std::string install_command = "sudo cmake --build " + build_dir + " --target install";
+    return exec(install_command);
+}
+
+bool exec_test(const Config& config, const BuildArgs& args) {
+    std::string build_dir =
+        config.root_build_dir
+        + "/" + args.target
+        + "/" + args.type;
+    std::string install_command = "cd " + build_dir + " && ctest --output-on-failure";
     return exec(install_command);
 }

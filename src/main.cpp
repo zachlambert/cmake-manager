@@ -54,6 +54,11 @@ int main(int argc, const char** argv) {
             return 1;
         }
     }
+    else if (auto command = std::get_if<CliTest>(&cli.command)) {
+        if (!exec_test(config, command->build_args)) {
+            return 1;
+        }
+    }
     else {
         assert(false);
         std::cerr << "Unsupported command" << std::endl;

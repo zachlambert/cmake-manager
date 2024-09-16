@@ -42,14 +42,15 @@ bool load_config(const std::string& config_dir, Config& config) {
     config.host_build_target = "host";
     config.host_install_prefix = "/usr";
 
+    config.generate_compile_commands = false;
+    config.copy_compile_commands = false;
+
     // Read values from config
 
-    std::cout << "Checking config from: " << config_dir << std::endl;
     if (!std::filesystem::exists(config_dir)) {
         // Sensible defaults should be available without a config file
         return true;
     }
-    std::cout << "Loading config from: " << config_dir << std::endl;
 
     std::ifstream file(config_dir);
     std::string line;
@@ -122,6 +123,32 @@ bool load_config(const std::string& config_dir, Config& config) {
                     << "doesn't exist"
                     << std::endl;
                 return false;
+            }
+        }
+        else if (words[0] == "generate_compile_commands") {
+            if (!check_word_count("generate_compile_commands", 1)) return false;
+            if (words[1] == "true") {
+                config.generate_compile_commands = true;
+            } else if (words[1] == "false"){
+                config.generate_compile_commands = false;
+            } else {
+                std::cerr
+                    << "Invalid config file, line " << i << ", "
+                    << "value for 'generate_compile_commands' must be "
+                    << "'true' or 'false'";
+            }
+        }
+        else if (words[0] == "copy_compile_commands") {
+            if (!check_word_count("copy_compile_commands", 1)) return false;
+            if (words[1] == "true") {
+                config.copy_compile_commands = true;
+            } else if (words[1] == "false"){
+                config.copy_compile_commands = false;
+            } else {
+                std::cerr
+                    << "Invalid config file, line " << i << ", "
+                    << "value for 'copy_compile_commands' must be "
+                    << "'true' or 'false'";
             }
         }
         else {
